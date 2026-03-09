@@ -21,5 +21,18 @@ fetch("https://raw.githubusercontent.com/<username>/zas-trac-test/main/data.json
   <script>
     document.getElementById("info").innerText = navigator.userAgent;
   </script>
+  <h3>Test GitHub RAW backend:</h3>
+<pre id="raw-output">loading...</pre>
+
+<script>
+fetch("https://raw.githubusercontent.com/evgenchekysov/zas-trac-test/refs/heads/main/data.json?ts=" + Date.now())
+  .then(r => r.json())
+  .then(data => {
+    document.getElementById("raw-output").innerText = JSON.stringify(data, null, 2);
+  })
+  .catch(err => {
+    document.getElementById("raw-output").innerText = "Ошибка: " + err;
+  });
+</script>
 </body>
 </html>
