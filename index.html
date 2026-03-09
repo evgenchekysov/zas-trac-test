@@ -34,5 +34,53 @@ fetch("https://raw.githubusercontent.com/evgenchekysov/zas-trac-test/refs/heads/
     document.getElementById("raw-output").innerText = "Ошибка: " + err;
   });
 </script>
+
+  <h2>Create ZAS‑TRAC request</h2>
+
+<input id="issueTitle" placeholder="Title" style="width:300px;"><br><br>
+<textarea id="issueBody" placeholder="Description" rows="4" style="width:300px;"></textarea><br><br>
+<input id="issueLabels" placeholder="Labels: new,maintenance" style="width:300px;"><br><br>
+
+<button onclick="sendIssue()">Send request</button>
+
+<pre id="issueResult"></pre>
+
+<script>
+async function sendIssue() {
+  const title  = document.getElementById("issueTitle").value.trim();
+  const body   = document.getElementById("issueBody").value.trim();
+  const labels = document.getElementById("issueLabels").value.trim();
+
+  document.getElementById("issueResult").innerText = "Sending request...";
+
+  const apiUrl = "https://api.github.com/repos/evgenchekysov/zas-trac-test/actions/workflows/create_issue.yml/dispatches";
+
+  try {
+    const res = await fetch(apiUrl, {
+      method: "POST",
+      headers: {
+        "Accept": "application/vnd.github+json",
+        // ⚠️ Токен НЕ нужен. Запрос проходит анонимно.
+      },
+      body: JSON.stringify({
+        ref: "main",
+        inputs: { title, body, labels }
+      })
+    });
+
+    if (res.status === 204) {
+      document.getElementById("issueResult").innerText =
+        "Request sent successfully! Check Issues tab on GitHub.";
+    } else {
+      const txt = await res.text();
+      document.getElementById("issueResult").innerText =
+        "Unexpected response: " + res.status + "\n" + txt;
+    }
+
+  } catch (e) {
+    document.getElementById("issueResult").innerText = "Error: " + e;
+  }
+}
+</script>
 </body>
 </html>
