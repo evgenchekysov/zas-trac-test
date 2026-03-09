@@ -1,4 +1,4 @@
-name: Create Issue API
+name: ZAS-TRAC Issue API
 
 on:
   workflow_dispatch:
@@ -6,19 +6,25 @@ on:
       title:
         description: "Issue title"
         required: true
+        type: string
       body:
         description: "Issue body"
         required: true
+        type: string
+      labels:
+        description: "CSV labels"
+        required: false
+        type: string
 
 jobs:
   create_issue:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Call GitHub API to create issue
+      - name: Create issue via GitHub API
         run: |
           curl -X POST \
             -H "Accept: application/vnd.github+json" \
             -H "Authorization: Bearer ${{ secrets.GH_PAT }}" \
             https://api.github.com/repos/${{ github.repository }}/issues \
-            -d "{\"title\": \"${{ github.event.inputs.title }}\", \"body\": \"${{ github.event.inputs.body }}\", \"labels\": [\"new\"]}"
+            -d "{\"title\": \"${{ github.event.inputs.title }}\", \"body\": \"${{ github.event.inputs.body }}\", \"labels\": [\"${{ github.event.inputs.labels }}\"]}"
