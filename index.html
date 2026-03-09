@@ -9,7 +9,15 @@
   <p>If you see this page, the connection works.</p>
   <p>Your device info:</p>
   <pre id="info"></pre>
-
+  <script>
+fetch("https://raw.githubusercontent.com/<username>/zas-trac-test/main/data.json?ts=" + Date.now())
+  .then(r => r.json())
+  .then(data => {
+    console.log("RAW backend:", data);
+    document.body.innerHTML += "<pre>" + JSON.stringify(data, null, 2) + "</pre>";
+  })
+  .catch(e => console.error("Ошибка RAW:", e));
+  </script>
   <script>
     document.getElementById("info").innerText = navigator.userAgent;
   </script>
