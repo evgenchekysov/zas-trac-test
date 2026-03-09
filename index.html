@@ -1,86 +1,204 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
   <meta charset="UTF-8" />
-  <title>ZAS-TRAC Test Page</title>
+  <title>ZAS‑TRAC Test Page</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body { font-family: system-ui, Segoe UI, Arial, sans-serif; line-height: 1.45; padding: 18px; }
+    h1 { margin-top: 0; }
+    .card { border: 1px solid #ddd; border-radius: 8px; padding: 14px 16px; margin: 14px 0; }
+    .row { display: grid; gap: 14px; }
+    @media (min-width: 860px) { .row { grid-template-columns: 1fr 1fr; } }
+    label { display: inline-block; margin-top: 8px; font-weight: 600; }
+    input, textarea { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 6px; }
+    button { margin-top: 10px; padding: 8px 14px; border-radius: 6px; border: 1px solid #0f62fe; background: #0f62fe; color: #fff; cursor: pointer; }
+    button:disabled { opacity: .6; cursor: not-allowed; }
+    pre { white-space: pre-wrap; word-break: break-word; background: #fafafa; padding: 10px; border-radius: 6px; border: 1px solid #eee; }
+    ul.issues { list-style: none; padding: 0; margin: 0; }
+    ul.issues li { padding: 8px 0; border-bottom: 1px dashed #ddd; }
+    small.muted { color:#666; }
+  </style>
 </head>
 <body>
+
   <h1>ZAS‑TRAC TEST PAGE</h1>
-  <p>If you see this page, the connection works.</p>
-  <p>Your device info:</p>
-  <pre id="info"></pre>
+  <p>Если вы видите эту страницу — подключение работает. Ниже собраны тесты фронтенда с GitHub RAW (чтение),
+     список заявок из Issues (чтение), и отправка заявки (через форму GitHub).</p>
+
+  <!-- 1) Отображение информации об устройстве — удобно для скриншотов и сверки -->
+  <div class="card">
+    <h2>Информация об устройстве</h2>
+    <pre id="ua">loading…</pre>
+  </div>
+
+  <div class="row">
+
+    <!-- 2) Чтение конфигурации/справочника из GitHub RAW — это наш "backend на чтение" -->
+    <div class="card">
+      <h2>Тест GitHub RAW backend (чтение JSON)</h2>
+      <p class="muted"><small>Источник: RAW URL файла <code>data.json</code> в репозитории.</small></p>
+      <pre id="rawBox">loading…</pre>
+    </div>
+
+    <!-- 3) Список открытых заявок (Issues) из репозитория — GET без токена для публичного репо -->
+    <div class="card">
+      <h2>Открытые заявки (Issues)</h2>
+      <p class="muted"><small>Читаем публичный REST‑эндпойнт GitHub без токена (на публичных репо допускается; аутентификация только повышает квоты).[1](https://docs.github.com/v3/auth)</small></p>
+      <div id="issuesBox">loading…</div>
+    </div>
+
+  </div>
+
+  <!-- 4) Создание заявки: сейчас безопасный способ — открыть форму GitHub с предзаполнением полей.
+         API‑создание из браузера без серверной прослойки приведёт к 401, т.к. /workflows/dispatches и /dispatches требуют токен.[2](https://stackoverflow.com/questions/73400268/github-actions-must-have-admin-rights-to-trigger-workflow-dispatch)[3](https://share.apidog.com/apidoc/docs-site/347364/api-3489322) -->
+  <div class="card">
+    <h2>Создать заявку</h2>
+
+    <label for="t">Заголовок</label>
+    <input id="t" placeholder="Коротко о проблеме" />
+
+    <label for="b">Описание</label>
+    <textarea id="b" rows="4" placeholder="Подробности, место, контакт, желаемый срок…"></textarea>
+
+    <label for="lbl">Метки (через запятую, опционально)</label>
+    <input id="lbl" placeholder="new,maintenance" />
+
+    <div style="margin-top:10px">
+      <button id="openGhFormBtn">Открыть форму GitHub Issue</button>
+      <!-- Кнопка ниже зарезервирована под будущий защищённый эндпойнт (Power Automate/Azure) -->
+      <button id="sendApiBtn" disabled title="Отключено: нужен защищённый серверный endpoint">Отправить через API (позже)</button>
+    </div>
+
+    <pre id="sendResult"></pre>
+
+    <p class="muted"><small>
+      Примечание: прямой POST к GitHub Actions из браузера (например, <code>/actions/workflows/.../dispatches</code> или
+      <code>/dispatches</code>) без токена возвращает <code>401 Requires authentication</code>. Это по требованиям безопасности GitHub и
+      описано в документации.[2](https://stackoverflow.com/questions/73400268/github-actions-must-have-admin-rights-to-trigger-workflow-dispatch)[3](https://share.apidog.com/apidoc/docs-site/347364/api-3489322)
+      Как только появится доверенный серверный endpoint (Azure Web App / одобренный Power Automate HTTP),
+      достаточно будет включить кнопку «Отправить через API».
+    </small></p>
+  </div>
+
   <script>
-fetch("https://raw.githubusercontent.com/<username>/zas-trac-test/main/data.json?ts=" + Date.now())
-  .then(r => r.json())
-  .then(data => {
-    console.log("RAW backend:", data);
-    document.body.innerHTML += "<pre>" + JSON.stringify(data, null, 2) + "</pre>";
-  })
-  .catch(e => console.error("Ошибка RAW:", e));
-  </script>
-  <script>
-    document.getElementById("info").innerText = navigator.userAgent;
-  </script>
-  <h3>Test GitHub RAW backend:</h3>
-<pre id="raw-output">loading...</pre>
+    // ===== Константы проекта (замени при необходимости) =====
+    const OWNER = "evgenchekysov";
+    const REPO  = "zas-trac-test";
 
-<script>
-fetch("https://raw.githubusercontent.com/evgenchekysov/zas-trac-test/refs/heads/main/data.json?ts=" + Date.now())
-  .then(r => r.json())
-  .then(data => {
-    document.getElementById("raw-output").innerText = JSON.stringify(data, null, 2);
-  })
-  .catch(err => {
-    document.getElementById("raw-output").innerText = "Ошибка: " + err;
-  });
-</script>
+    // RAW JSON — твой рабочий URL с конфигурацией/справочниками
+    // Если файл лежит в ветке main, можно использовать стабильный путь с refs/heads/main
+    const RAW_URL = "https://raw.githubusercontent.com/evgenchekysov/zas-trac-test/refs/heads/main/data.json";
 
-  <h2>Create ZAS‑TRAC request</h2>
+    // Будущий backend для безопасного создания заявок (когда появится trusted endpoint Microsoft/Azure):
+    // const BACKEND_URL = "https://<твой_доверенный_эндпойнт>";
+    // document.getElementById("sendApiBtn").disabled = false;  // <-- включить, когда появится сервер
 
-<input id="issueTitle" placeholder="Title" style="width:300px;"><br><br>
-<textarea id="issueBody" placeholder="Description" rows="4" style="width:300px;"></textarea><br><br>
-<input id="issueLabels" placeholder="Labels: new,maintenance" style="width:300px;"><br><br>
+    // ===== 1) Info о девайсе =====
+    document.getElementById("ua").textContent = navigator.userAgent;
 
-<button onclick="sendIssue()">Send request</button>
+    // ===== 2) Чтение GitHub RAW (справочники/настройки) =====
+    (async function loadRaw() {
+      const box = document.getElementById("rawBox");
+      try {
+        const r = await fetch(RAW_URL + "?ts=" + Date.now(), { cache: "no-store" });
+        if (!r.ok) throw new Error("HTTP " + r.status);
+        const data = await r.json();
+        data._fetched_at = new Date().toISOString();
+        box.textContent = JSON.stringify(data, null, 2);
+      } catch (e) {
+        box.textContent = "Ошибка чтения RAW: " + e;
+      }
+    })();
 
-<pre id="issueResult"></pre>
+    // ===== 3) Список Issues (публичный GET без токена) =====
+    (async function loadIssues() {
+      const host = "https://api.github.com";
+      const url  = `${host}/repos/${OWNER}/${REPO}/issues?state=open&per_page=20`;
+      const box  = document.getElementById("issuesBox");
+      try {
+        const r = await fetch(url, { headers: { "Accept": "application/vnd.github+json" } });
+        if (!r.ok) throw new Error("HTTP " + r.status);
+        const issues = await r.json();
 
-<script>
-async function sendIssue() {
-  const title  = document.getElementById("issueTitle").value.trim();
-  const body   = document.getElementById("issueBody").value.trim();
-  const labels = document.getElementById("issueLabels").value.trim();
+        if (!Array.isArray(issues) || issues.length === 0) {
+          box.innerHTML = "<p>Открытых заявок нет.</p>";
+          return;
+        }
 
-  document.getElementById("issueResult").innerText = "Sending request...";
+        const ul = document.createElement("ul");
+        ul.className = "issues";
+        issues.forEach(i => {
+          const li = document.createElement("li");
+          const a  = document.createElement("a");
+          a.href   = i.html_url;
+          a.target = "_blank";
+          a.rel    = "noopener";
+          a.textContent = `#${i.number} — ${i.title}`;
+          li.appendChild(a);
+          if (i.labels?.length) {
+            const tags = " [" + i.labels.map(l => (typeof l === "string" ? l : l.name)).join(", ") + "]";
+            li.appendChild(document.createTextNode(tags));
+          }
+          ul.appendChild(li);
+        });
+        box.innerHTML = "";
+        box.appendChild(ul);
 
-  const apiUrl = "https://api.github.com/repos/evgenchekysov/zas-trac-test/actions/workflows/create_issue.yml/dispatches";
+      } catch (e) {
+        box.innerHTML = `<p>Ошибка загрузки Issues: ${String(e)}</p>
+                         <p class="muted"><small>Если это ограничение по частоте (rate limit), попробуй позже
+                         или авторизуй запрос на серверной стороне для увеличения квот.[1](https://docs.github.com/v3/auth)</small></p>`;
+      }
+    })();
 
-  try {
-    const res = await fetch(apiUrl, {
-      method: "POST",
-      headers: {
-        "Accept": "application/vnd.github+json",
-        // ⚠️ Токен НЕ нужен. Запрос проходит анонимно.
-      },
-      body: JSON.stringify({
-        ref: "main",
-        inputs: { title, body, labels }
-      })
+    // ===== 4A) Безопасный на сегодня способ "создать заявку": открыть форму GitHub с предзаполнением =====
+    // GitHub поддерживает префиллинг title/body через параметры URL.
+    // Labels через URL не устанавливаются — их удобно автоматизировать на стороне репозитория (Issue Templates / Actions).
+    document.getElementById("openGhFormBtn").addEventListener("click", () => {
+      const t = document.getElementById("t").value.trim();
+      const b = document.getElementById("b").value.trim();
+      const l = document.getElementById("lbl").value.trim();
+
+      // Мини‑валидация, чтобы не улетели пустые строки
+      const title = t || "ZAS‑TRAC request";
+      const body  = (b ? b + "\n\n" : "") +
+                    (l ? `Labels (requested): ${l}\n` : "") +
+                    `\n— submitted via ZAS‑TRAC test page at ${new Date().toISOString()}`;
+
+      const url = `https://github.com/${OWNER}/${REPO}/issues/new?` +
+                  `title=${encodeURIComponent(title)}` +
+                  `&body=${encodeURIComponent(body)}`;
+
+      window.open(url, "_blank", "noopener");
+      document.getElementById("sendResult").textContent =
+        "Открыта форма GitHub Issue в новой вкладке. После сохранения заявка появится в Issues.";
     });
 
-    if (res.status === 204) {
-      document.getElementById("issueResult").innerText =
-        "Request sent successfully! Check Issues tab on GitHub.";
-    } else {
-      const txt = await res.text();
-      document.getElementById("issueResult").innerText =
-        "Unexpected response: " + res.status + "\n" + txt;
-    }
+    // ===== 4B) Резерв под автоматическую отправку через защищённый backend (в будущем) =====
+    document.getElementById("sendApiBtn").addEventListener("click", async () => {
+      const out = document.getElementById("sendResult");
+      out.textContent = "Endpoint пока не подключён. Ждём утвержденный серверный URL (Azure/Power Automate).";
+      // Пример (когда появится BACKEND_URL):
+      /*
+      const title  = document.getElementById("t").value.trim() || "ZAS‑TRAC request";
+      const body   = document.getElementById("b").value.trim();
+      const labels = document.getElementById("lbl").value.trim().split(",").map(s => s.trim()).filter(Boolean);
 
-  } catch (e) {
-    document.getElementById("issueResult").innerText = "Error: " + e;
-  }
-}
-</script>
+      try {
+        const r = await fetch(BACKEND_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ title, body, labels })
+        });
+        if (!r.ok) throw new Error("HTTP " + r.status);
+        const data = await r.json();
+        out.textContent = `Готово! Заявка #${data.number}\n${data.issue_url}`;
+      } catch (e) {
+        out.textContent = "Ошибка отправки: " + e;
+      }
+      */
+    });
+  </script>
 </body>
 </html>
