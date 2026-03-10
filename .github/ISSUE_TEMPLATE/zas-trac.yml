@@ -1,6 +1,6 @@
 name: "ZAS‑TRAC: новая заявка"
 description: "Создать заявку на обслуживание/ремонт"
-title: "[ZAS] {кратко}: проблема/работа"
+title: "[ZAS] проблема/работа"
 labels:
   - "status:new"
   - "type:request"
@@ -10,7 +10,7 @@ body:
     id: room
     attributes:
       label: Объект / Цех / Площадка
-      description: Выберите площадку/цех (при совпадении через базу данных будет уточнено автоматически)
+      description: "Выберите площадку/цех (для тестовой базы)"
       options:
         - КПП
         - ПБК_43ПО
@@ -24,27 +24,27 @@ body:
     validations:
       required: true
 
- - type: input
+  - type: input
     id: equipment_query
     attributes:
-      label: Оборудование (поиск)
-      description: 'Введите QR‑ID, инв.номер или часть названия. Примеры: "HEN100003ZL3" или "100003718" или "тележка".'
-      placeholder: 'например: HEN100003ZL3'
+      label: "Оборудование (поиск)"
+      description: 'Введите QR‑ID, инв.номер или часть названия. Примеры: "HEN100003ZL3", "100003718", "тележка".'
+      placeholder: "например: HEN100003ZL3"
     validations:
       required: true
 
   - type: textarea
     id: problem
     attributes:
-      label: Описание проблемы
-      placeholder: "Что происходит, когда проявляется, последствия, безопасность"
+      label: "Описание проблемы"
+      placeholder: "Что происходит, когда проявляется, последствия"
     validations:
       required: true
 
   - type: dropdown
     id: priority
     attributes:
-      label: Приоритет
+      label: "Приоритет"
       options:
         - низкий
         - средний
@@ -56,8 +56,8 @@ body:
   - type: textarea
     id: attachments
     attributes:
-      label: Фото / Дополнительно
-      description: Прикрепляйте фото через стандартный UI GitHub (drag&drop)
-      placeholder: "Дополнительные материалы, ссылки, примечания"
+      label: "Фото / Дополнительно"
+      description: "Прикрепляйте фото через стандартный UI GitHub (drag&drop)"
+      placeholder: "Дополнительные материалы"
     validations:
       required: false
