@@ -1,0 +1,91 @@
+name: "ZAS‑TRAC: новая заявка"
+description: "Создать заявку на обслуживание/ремонт"
+title: "[ZAS] {Оборудование}: краткое описание"
+labels:
+  - "status:new"
+  - "type:request"
+
+body:
+  - type: dropdown
+    id: room
+    attributes:
+      label: Объект / Цех / Площадка
+      description: Выберите площадку/цех (список из data/rooms.json; временно вшит)
+      options:
+        - АК
+        - ПБК
+        - ВК
+        - ГАЗ
+        - КПП
+        - ПК
+        - ИНФРА
+        - СУШКА
+        - СКЛАД
+        - (пусто)
+    validations:
+      required: true
+
+  - type: dropdown
+    id: equipment
+    attributes:
+      label: Оборудование
+      description: Выберите из тестового списка (10 позиций). На B-шаге расширим до полного импорта из Excel.
+      options:
+        - "Здание (администартивный корпус) — HEN000007IMC — 100000000"
+        - "Здание Бытовой корпус — HEN000007H58 — 100000001"
+        - "Здание вспомогательный корпус — HEN100003ZFZ — 100000002"
+        - "ГРП здание — HEN100003ZG2 — 100000003"
+        - "КПП (здание) — HEN000007IM3 — 100000004"
+        - "Склад готовой продукции (неотапливаемый) — HEN100003ZGR — 100000005"
+        - "Склад отапливаемый — HEN100003ZIJ — 100000006"
+        - "Установка по производству смесей — HEN100003ZIN — 100000007"
+        - "Противопожарные резервуары — HEN100003ZM1 — 100000012"
+        - "Пруд испаритель — HEN100003ZM0 — 100000013"
+    validations:
+      required: true
+
+  - type: input
+    id: qrid
+    attributes:
+      label: QR‑ID
+      description: Укажите QR‑ID (или оставьте пустым — на шаге B подставим автоматически из выбранного оборудования)
+      placeholder: "Например: HEN000007IMC"
+    validations:
+      required: false
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Описание проблемы
+      placeholder: "Что происходит, когда проявляется, последствия"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Приоритет
+      options:
+        - низкий
+        - средний
+        - высокий
+        - аварийный
+    validations:
+      required: true
+
+  - type: input
+    id: contact
+    attributes:
+      label: Контакт
+      placeholder: "Имя, телефон, Telegram"
+    validations:
+      required: false
+
+  - type: textarea
+    id: attachments
+    attributes:
+      label: Фото / Дополнительно
+      description: Прикрепляйте фото через стандартный UI GitHub (drag&drop)
+      placeholder: "Дополнительные материалы, ссылки, детали"
+    validations:
+      required: false
