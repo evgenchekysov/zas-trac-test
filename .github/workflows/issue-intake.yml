@@ -1,0 +1,137 @@
+name: ZAS-TRAC • Intake
+
+on:
+  issues:
+    types: [opened]
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  intake:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Parse form & enrich issue
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const {owner, repo, number} = context.issue;
+
+            // 1) Load equipment + contacts
+            const fs = require('fs');
+            const path = require('path');
+
+            function safeReadJSON(p) {
+              try { return JSON.parse(fs.readFileSync(p, 'utf8')); }
+              catch(e) { return null; }
+            }
+
+            const eqPath = path.join(process.env.GITHUB_WORKSPACE, 'data', 'equipment.json');
+            const equipment = safeReadJSON(eqPath) || [];
+
+            const contactsPath = path.join(process.env.GITHUB_WORKSPACE, 'data', 'contacts.json');
+            const contacts = safeReadJSON(contactsPath) || [];
+
+            // 2) Read issue to get form fields
+            const issue = await github.rest.issues.get({owner, repo, issue_number: number});
+            const body = issue.data.body || '';
+
+            // Helper to extract form answers from GH issue body (Issue Forms render as markdown table)
+            function getFormValue(label) {
+              const re = new RegExp(`\\|\\s*${label}\\s*\\|\\s*([^\\n|]+)\\s*\\|`, 'i');
+              const m = body.match(re);
+              return m ? m[1].trim() : '';
+            }
+
+            const inputRoom = getFormValue('Объект / Цех / Площадка') || '';
+            const query = getFormValue('Оборудование \\(поиск\\)') || '';
+            const prio = getFormValue('Приоритет') || '';
+
+            // 3) Contact: actor (=issue creator)
+            const actor = context.payload.sender?.login || 'unknown';
+            const contactRec = contacts.find(c => (c.github || '').toLowerCase() === actor.toLowerCase());
+            const contactText = contactRec
+              ? `${contactRec.name || ''} ${contactRec.phone ? '· ' + contactRec.phone : ''} ${contactRec.email ? '· ' + contactRec.email : ''} (@${actor})`.trim()
+              : `@${actor}`;
+
+            // 4) Match equipment by qrid / inventory_number / description / room
+            function norm(s){ return (s||'').toString().toLowerCase(); }
+            const q = norm(query);
+
+            // Heuristics:
+            // - exact if includes full QR or full inventory
+            // - otherwise contains in description
+            let candidates = equipment.filter(e => {
+              const nDesc = norm(e.description);
+              const nInv  = norm(e.inventory_number);
+              const nQR   = norm(e.qrid);
+              const nRoom = norm(e.room);
+              const roomOk = inputRoom ? (nRoom === norm(inputRoom)) : true;
+
+              return roomOk && (
+                (q && (nQR.includes(q) || nInv.includes(q))) ||
+                (q && nDesc.includes(q))
+              );
+            });
+
+            // If nothing found, try ignoring room filter
+            if (candidates.length === 0) {
+              candidates = equipment.filter(e => {
+                const nDesc = norm(e.description);
+                const nInv  = norm(e.inventory_number);
+                const nQR   = norm(e.qrid);
+                return (q && (nQR.includes(q) || nInv.includes(q) || nDesc.includes(q)));
+              });
+            }
+
+            // Prefer exact matches on QR/inventory when multiple
+            function isExact(e) {
+              const nInv  = norm(e.inventory_number);
+              const nQR   = norm(e.qrid);
+              return (q === nInv || q === nQR);
+            }
+            const exact = candidates.filter(isExact);
+            const chosen = exact.length === 1 ? exact[0]
+                           : candidates.length === 1 ? candidates[0]
+                           : null;
+
+            // 5) Build labels
+            const labels = [];
+            if (prio) labels.push(`prio:${prio}`);
+            if (chosen?.room) labels.push(`room:${chosen.room}`);
+            labels.push(chosen ? 'asset:ok' : (candidates.length ? 'asset:ambiguous' : 'asset:unknown'));
+
+            await github.rest.issues.addLabels({owner, repo, issue_number: number, labels});
+
+            // 6) Compose tech comment
+            function fmt(e){
+              return `• ${e.description} — ${e.qrid} — ${e.inventory_number} — ${e.room || ''}`;
+            }
+
+            let comment = `**Автозаполнение ZAS‑TRAC**\n\n` +
+                          `**Контакт:** ${contactText}\n` +
+                          (prio ? `**Приоритет:** ${prio}\n` : '') +
+                          (inputRoom ? `**Room (из формы):** ${inputRoom}\n` : '');
+
+            if (chosen) {
+              comment += `\n**Оборудование определено:**\n${fmt(chosen)}\n`;
+            } else if (candidates.length) {
+              comment += `\n**Неоднозначное совпадение, кандидаты:**\n` +
+                         candidates.slice(0, 10).map(fmt).join('\n') +
+                         (candidates.length > 10 ? `\n…и ещё ${candidates.length-10}` : '') +
+                         `\n\nУточните запрос в комментарии (QR‑ID/инв.номер точнее).`;
+            } else {
+              comment += `\n**Оборудование не найдено** по запросу: \`${query}\`.\n` +
+                         `Проверьте QR‑ID/инв.номер/описание или добавьте оборудование в \`data/equipment.json\`.`;
+            }
+
+            await github.rest.issues.createComment({owner, repo, issue_number: number, body: comment});
