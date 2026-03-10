@@ -1,6 +1,6 @@
 name: "ZAS‑TRAC: новая заявка"
 description: "Создать заявку на обслуживание/ремонт"
-title: "[ZAS] {Оборудование}: краткое описание"
+title: "[ZAS] {кратко}: проблема/работа"
 labels:
   - "status:new"
   - "type:request"
@@ -10,7 +10,7 @@ body:
     id: room
     attributes:
       label: Объект / Цех / Площадка
-      description: Выберите площадку/цех (сокращённый список — только из тестовой базы)
+      description: Выберите площадку/цех (при совпадении через базу данных будет уточнено автоматически)
       options:
         - КПП
         - ПБК_43ПО
@@ -24,45 +24,20 @@ body:
     validations:
       required: true
 
-  - type: dropdown
-    id: equipment
+  - type: input
+    id: equipment_query
     attributes:
-      label: Оборудование
-      description: Тестовый список (15 позиций из выделенных). На шаге B подключим импорт из Excel.
-      options:
-        - "Защитное ограждение зоны передвижения 1-й этаж — HEN100003ZE9 — 100003708 — ПК_13Т"
-        - "Конвейерные весы — HEN100003ZHR — 100003712 — СУШКА"
-        - "Преобразователь частоты 2.4 A — HEN000007ILX — 100003713 — СУШКА"
-        - "Преобразователь частоты 7.3 A — HEN000007ILZ — 100003714 — СУШКА"
-        - "Преобразователь частоты 15.6 A — HEN000007ILY — 100003715 — СУШКА"
-        - "Система кондиционирования HAIER HSU-09 C203/R2 — HEN000007IMT — 100003717 — КПП"
-        - "Тележка электрическая поводковая EJE M15/540-1000 — HEN100003ZL3 — 100003718 — С_МОБОБ"
-        - "Гигромиксер GA480 — HEN000007HE1 — 100003720 — ФАВОРИТ"
-        - "Автоматический дозатор серия №0378 F — HEN000007HDE — 100003723 — СТРОЙБАЗ"
-        - "Аппликатор автоматический ALS 204 RH — HEN100003ZE1 — 100003724 — ПК_13Т"
-        - "Накопительный бункер — HEN100003ZHE — 100003731 — ПК_13Т"
-        - "Металлическая стеллажная система Mecalux — HEN000007IN4 — 100003753 — ПК_4ЭПО"
-        - "Фасовочная машина HAVER 4sev — HEN100003ZHF — 100003754 — ПК_13Т"
-        - "Внутренний смотчик этикеток AD 1211-SO — HEN000007H4W — 100003755 — ПБК_43ПО"
-        - "Горизонтальная система безопасности BATILIGNE — HEN000007IT1 — 100003756 — ПК_КРОВЛ"
-        - "Каплеструйный маркиратор HITACHI — HEN000007H5C — 100003758 — ПК_13Т"
+      label: Оборудование (поиск)
+      description: Введите QR‑ID, инв.номер или часть названия. Примеры: "HEN100003ZL3" или "100003718" или "тележка EJE".
+      placeholder: "например: HEN100003ZL3"
     validations:
       required: true
 
-  - type: input
-    id: qrid
-    attributes:
-      label: QR‑ID
-      description: Можно оставить пустым — на шаге B подставим автоматически на основе выбранного оборудования
-      placeholder: "Например: HEN000007ILX"
-    validations:
-      required: false
-
   - type: textarea
-    id: description
+    id: problem
     attributes:
       label: Описание проблемы
-      placeholder: "Что происходит, когда проявляется, последствия"
+      placeholder: "Что происходит, когда проявляется, последствия, безопасность"
     validations:
       required: true
 
@@ -78,19 +53,11 @@ body:
     validations:
       required: true
 
-  - type: input
-    id: contact
-    attributes:
-      label: Контакт
-      placeholder: "Имя, телефон, Telegram"
-    validations:
-      required: false
-
   - type: textarea
     id: attachments
     attributes:
       label: Фото / Дополнительно
       description: Прикрепляйте фото через стандартный UI GitHub (drag&drop)
-      placeholder: "Дополнительные материалы, ссылки, детали"
+      placeholder: "Дополнительные материалы, ссылки, примечания"
     validations:
       required: false
