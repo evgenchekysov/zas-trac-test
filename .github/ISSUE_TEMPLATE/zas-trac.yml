@@ -28,7 +28,7 @@ body:
     id: equipment_query
     attributes:
       label: Оборудование (поиск)
-      description: Введите QR‑ID, инв.номер или часть названия. Примеры: "HEN100003ZL3" или "100003718" или "тележка EJE".
+      description: Введите QR‑ID, инв.номер или часть названия. Примеры: "HEN100003ZL3" или "100003718" или "тележка EJE"
       placeholder: "например: HEN100003ZL3"
     validations:
       required: true
