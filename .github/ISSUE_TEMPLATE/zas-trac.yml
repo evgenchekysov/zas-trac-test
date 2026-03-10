@@ -24,12 +24,12 @@ body:
     validations:
       required: true
 
-  - type: input
+ - type: input
     id: equipment_query
     attributes:
       label: Оборудование (поиск)
-      description: Введите QR‑ID, инв.номер или часть названия. Примеры: "HEN100003ZL3" или "100003718" или "тележка EJE"
-      placeholder: "например: HEN100003ZL3"
+      description: 'Введите QR‑ID, инв.номер или часть названия. Примеры: "HEN100003ZL3" или "100003718" или "тележка".'
+      placeholder: 'например: HEN100003ZL3'
     validations:
       required: true
 
