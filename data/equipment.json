@@ -1,1 +1,114 @@
-
+[
+  {
+    "cost_center": "1211012295",
+    "description": "Защитное ограждение зоны передвижения 1-й этаж",
+    "inventory_number": "100003708",
+    "qrid": "HEN100003ZE9",
+    "room": "ПК_13Т"
+  },
+  {
+    "cost_center": "1111012295",
+    "description": "Конвейерные весы",
+    "inventory_number": "100003712",
+    "qrid": "HEN100003ZHR",
+    "room": "СУШКА"
+  },
+  {
+    "cost_center": "1999012295",
+    "description": "Преобразователь частоты 2.4 A",
+    "inventory_number": "100003713",
+    "qrid": "HEN000007ILX",
+    "room": "СУШКА"
+  },
+  {
+    "cost_center": "1999012295",
+    "description": "Преобразователь частоты 7.3 A",
+    "inventory_number": "100003714",
+    "qrid": "HEN000007ILZ",
+    "room": "СУШКА"
+  },
+  {
+    "cost_center": "1999012295",
+    "description": "Преобразователь частоты 15.6 A",
+    "inventory_number": "100003715",
+    "qrid": "HEN000007ILY",
+    "room": "СУШКА"
+  },
+  {
+    "cost_center": "1629012295",
+    "description": "Система кондиционирования HAIER HSU-09 C203/R2",
+    "inventory_number": "100003717",
+    "qrid": "HEN000007IMT",
+    "room": "КПП"
+  },
+  {
+    "cost_center": "1211082295",
+    "description": "Тележка электрическая поводковая EJE M15/540-1000",
+    "inventory_number": "100003718",
+    "qrid": "HEN100003ZL3",
+    "room": "С_МОБОБ"
+  },
+  {
+    "cost_center": "1211142295",
+    "description": "Гигромиксер GA480",
+    "inventory_number": "100003720",
+    "qrid": "HEN000007HE1",
+    "room": "ФАВОРИТ"
+  },
+  {
+    "cost_center": "1211142295",
+    "description": "Автоматический дозатор серия №0378 F",
+    "inventory_number": "100003723",
+    "qrid": "HEN000007HDE",
+    "room": "СТРОЙБАЗ"
+  },
+  {
+    "cost_center": "1112042295",
+    "description": "Аппликатор автоматический ALS 204 RH",
+    "inventory_number": "100003724",
+    "qrid": "HEN100003ZE1",
+    "room": "ПК_13Т"
+  },
+  {
+    "cost_center": "1111072295",
+    "description": "Накопительный бункер",
+    "inventory_number": "100003731",
+    "qrid": "HEN100003ZHE",
+    "room": "ПК_13Т"
+  },
+  {
+    "cost_center": "1211082295",
+    "description": "Металлическая стеллажная система Mecalux",
+    "inventory_number": "100003753",
+    "qrid": "HEN000007IN4",
+    "room": "ПК_4ЭПО"
+  },
+  {
+    "cost_center": "1111072295",
+    "description": "Фасовочная машина HAVER 4sev",
+    "inventory_number": "100003754",
+    "qrid": "HEN100003ZHF",
+    "room": "ПК_13Т"
+  },
+  {
+    "cost_center": "1111072295",
+    "description": "Внутренний смотчик этикеток AD 1211-SO",
+    "inventory_number": "100003755",
+    "qrid": "HEN000007H4W",
+    "room": "ПБК_43ПО"
+  },
+  {
+    "cost_center": "1112032295",
+    "description": "Горизонтальная система безопасности BATILIGNE",
+    "inventory_number": "100003756",
+    "qrid": "HEN000007IT1",
+    "room": "ПК_КРОВЛ"
+  },
+  {
+    "cost_center": "1111052295",
+    "description": "Каплеструйный маркиратор HITACHI",
+    "inventory_number": "100003758",
+    "qrid": "HEN000007H5C",
+    "room": "ПК_13Т"
+  }
+]
