@@ -1,1 +1,146 @@
+name: ZAS-TRAC • Build Month Cache
 
+on:
+  workflow_dispatch:
+    inputs:
+      month:
+        description: "Месяц в формате YYYY-MM (UTC). Если пусто — текущий."
+        required: false
+        type: string
+  schedule:
+    - cron: "20 2 * * *"   # каждый день в 02:20 UTC
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Build cache (inline Python)
+        id: cache
+        env:
+          INPUT_MONTH: ${{ inputs.month }}
+        run: |
+          python - << 'PY'
+          import os, json
+          from pathlib import Path
+          from datetime import datetime, timezone
+
+          TRACES = Path("traces")
+          CACHE  = Path("cache")
+
+          def parse_iso(ts):
+              if not ts:
+                  return None
+              try:
+                  # поддержка ...Z
+                  return datetime.fromisoformat(ts.replace("Z","+00:00"))
+              except Exception:
+                  return None
+
+          def month_bounds(month_prefix):
+              y, m = map(int, month_prefix.split("-"))
+              start = datetime(y, m, 1, tzinfo=timezone.utc)
+              if m == 12:
+                  end = datetime(y+1, 1, 1, tzinfo=timezone.utc)
+              else:
+                  end = datetime(y, m+1, 1, tzinfo=timezone.utc)
+              return start, end
+
+          def clamp_and_minutes(dt_from, dt_to, mstart, mend):
+              # обрезаем интервал границами месяца
+              if not dt_from or not dt_to:
+                  return 0
+              start = max(dt_from, mstart)
+              end   = min(dt_to, mend)
+              if end <= start:
+                  return 0
+              return int((end - start).total_seconds() // 60)
+
+          # --- выбрать месяц ---
+          month = os.environ.get("INPUT_MONTH")
+          if not month or month.strip()=="":
+              # текущий месяц (UTC)
+              now = datetime.now(timezone.utc)
+              month = f"{now.year:04d}-{now.month:02d}"
+
+          mstart, mend = month_bounds(month)
+
+          issues_out = []
+
+          if TRACES.exists():
+              for f in sorted(TRACES.glob("issue-*.json")):
+                  try:
+                      t = json.load(open(f, "r", encoding="utf-8"))
+                  except Exception as e:
+                      print(f"::warning::Cannot read {f}: {e}")
+                      continue
+
+                  work_min = 0
+                  hold_min = 0
+
+                  for seg in t.get("timeline", []):
+                      dt_from = parse_iso(seg.get("from"))
+                      dt_to   = parse_iso(seg.get("to"))
+                      # считаем только завершённые сегменты (у которых есть 'to')
+                      if dt_from and dt_to:
+                          mins = clamp_and_minutes(dt_from, dt_to, mstart, mend)
+                          if seg.get("type") == "work":
+                              work_min += mins
+                          elif seg.get("type") == "hold":
+                              hold_min += mins
+
+                  # статус
+                  status = "new"
+                  if t.get("done_at"):
+                      status = "done"
+                  else:
+                      # если есть открытый hold-сегмент
+                      if any(seg.get("type")=="hold" and seg.get("to") is None for seg in t.get("timeline", [])):
+                          status = "on_hold"
+                      # если есть открытый work-сегмент
+                      elif any(seg.get("type")=="work" and seg.get("to") is None for seg in t.get("timeline", [])):
+                          status = "in_progress"
+                      elif t.get("assigned_at"):
+                          status = "assigned"
+
+                  issues_out.append({
+                      "issue": t.get("issue"),
+                      "status": status,
+                      "room": t.get("room"),
+                      "equipment_id": t.get("equipment_id"),
+                      "assignee": t.get("assignee"),
+                      "work_minutes": work_min,
+                      "hold_minutes": hold_min
+                  })
+
+          # Если трасс нет — положим осмысленный пустой кэш
+          CACHE.mkdir(parents=True, exist_ok=True)
+          out = CACHE / f"month-{month}.json"
+
+          payload = {
+              "month": month,
+              "generated_utc": datetime.now(timezone.utc).isoformat(),
+              "issues": issues_out
+          }
+
+          with open(out, "w", encoding="utf-8") as f:
+              json.dump(payload, f, ensure_ascii=False, indent=2)
+
+          print(f"Wrote cache to {out} (issues: {len(issues_out)})")
+          PY
+
+      - name: Commit cache
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "chore(cache): build month cache"
+          file_pattern: "cache/month-*.json"
