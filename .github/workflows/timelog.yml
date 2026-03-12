@@ -1,1 +1,174 @@
+name: ZAS-TRAC • Timelog
 
+on:
+  issues:
+    types: [labeled, unlabeled, closed, reopened, assigned]
+  issue_comment:
+    types: [created]
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+  issues: write
+
+jobs:
+  timelog:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+
+      - name: Setup Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Process timelog (inline Python)
+        id: tl
+        run: |
+          python - << 'PY'
+          import os, json, re
+          from pathlib import Path
+          from datetime import datetime, timezone
+
+          TRACES = Path("traces")
+          TRACES.mkdir(parents=True, exist_ok=True)
+
+          def now_utc():
+              return datetime.now(timezone.utc).isoformat()
+
+          def load_trace(num):
+              f = TRACES / f"issue-{num}.json"
+              if f.exists():
+                  try:
+                      return json.load(open(f, "r", encoding="utf-8")), f
+                  except Exception as e:
+                      print(f"::warning::Cannot read {f}: {e}")
+              return {"issue": num, "timeline": [], "parts": []}, f
+
+          def save_trace(t, fpath):
+              fpath.parent.mkdir(parents=True, exist_ok=True)
+              with open(fpath, "w", encoding="utf-8") as f:
+                  json.dump(t, f, ensure_ascii=False, indent=2)
+
+          def last_seg(t):
+              return t["timeline"][-1] if t["timeline"] else None
+
+          def close_open(t, seg_type):
+              s = last_seg(t)
+              if s and s.get("to") is None and s.get("type")==seg_type:
+                  s["to"] = now_utc()
+
+          def open_seg(t, seg_type):
+              s = last_seg(t)
+              if s and s.get("to") is None and s.get("type")==seg_type:
+                  return
+              t["timeline"].append({"type": seg_type, "from": now_utc(), "to": None})
+
+          def parse_parts(body):
+              # Простой парсер блоков вида:
+              # [PARTS]
+              # CODE = QTY
+              parts=[]
+              if "[PARTS]" in body.upper():
+                  for line in body.splitlines():
+                      m = re.match(r"\s*([A-Za-z0-9_\-\.\/]+)\s*=\s*([0-9]+)\s*$", line)
+                      if m:
+                          parts.append({"code": m.group(1), "qty": int(m.group(2))})
+              return parts
+
+          # --- загрузка события ---
+          ep = os.environ.get("GITHUB_EVENT_PATH")
+          if not ep or not os.path.exists(ep):
+              print("::error::No GITHUB_EVENT_PATH")
+              raise SystemExit(1)
+          event = json.load(open(ep, "r", encoding="utf-8"))
+
+          issue = event.get("issue")
+          if not issue:
+              # Для workflow_dispatch или иных событий без issue — выходим без ошибки
+              print("::notice::No issue in payload; skip")
+              raise SystemExit(0)
+
+          number = issue["number"]
+          trace, fpath = load_trace(number)
+
+          # Снимем метаданные (room / assignee) из payload — пригодятся кэшу
+          labels = [l["name"] for l in issue.get("labels", [])]
+          rooms = [l for l in labels if l.lower().startswith("room:")]
+          if rooms:
+              trace["room"] = rooms[0].split(":",1)[1]
+          assignees = issue.get("assignees") or []
+          if assignees:
+              trace["assignee"] = assignees[0]["login"]
+
+          action = event.get("action","")
+          # --- issue_comment ---
+          if "comment" in event:
+              body = (event.get("comment") or {}).get("body","")
+              c = body.strip().lower()
+              if c.startswith("/start"):
+                  close_open(trace, "hold"); close_open(trace, "work")
+                  open_seg(trace, "work")
+                  trace.setdefault("started_at", now_utc())
+              elif c.startswith("/hold"):
+                  close_open(trace, "work"); open_seg(trace, "hold")
+              elif c.startswith("/resume"):
+                  close_open(trace, "hold"); open_seg(trace, "work")
+              elif c.startswith("/done"):
+                  close_open(trace, "work"); close_open(trace, "hold")
+                  trace["done_at"] = now_utc()
+              # parts
+              p = parse_parts(body)
+              if p:
+                  trace.setdefault("parts", [])
+                  trace["parts"].extend(p)
+
+          # --- issues events ---
+          elif action:
+              lab = (event.get("label") or {}).get("name","").lower()
+              if action == "assigned":
+                  trace.setdefault("assigned_at", now_utc())
+              elif action == "labeled":
+                  if lab == "in_progress":
+                      close_open(trace, "hold"); open_seg(trace, "work")
+                      trace.setdefault("started_at", now_utc())
+                  elif lab == "on_hold":
+                      close_open(trace, "work"); open_seg(trace, "hold")
+                  elif lab == "done":
+                      close_open(trace, "work"); close_open(trace, "hold")
+                      trace["done_at"] = now_utc()
+                  elif lab == "assigned":
+                      trace.setdefault("assigned_at", now_utc())
+              elif action == "unlabeled":
+                  if lab == "on_hold":
+                      close_open(trace, "hold"); open_seg(trace, "work")
+              elif action == "closed":
+                  close_open(trace, "work"); close_open(trace, "hold")
+                  trace["done_at"] = now_utc()
+
+          save_trace(trace, fpath)
+          print(f"Updated trace {fpath}")
+          PY
+
+      # Попытка коммита напрямую
+      - name: Commit traces
+        id: commit
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "chore(traces): update timelog"
+          file_pattern: "traces/issue-*.json"
+        continue-on-error: true
+
+      # Если коммит заблокирован правилами ветки — создадим PR
+      - name: Create PR with traces (fallback)
+        if: ${{ steps.commit.outcome == 'failure' }}
+        uses: peter-evans/create-pull-request@v6
+        with:
+          title: "chore(traces): update timelog"
+          commit-message: "chore(traces): update timelog"
+          branch: chore/update-traces
+          base: ${{ github.ref_name }}
+          labels: automated, traces
