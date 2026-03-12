@@ -1,1 +1,38 @@
+name: Import Equipment from Excel
 
+on:
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  import:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install deps
+        run: |
+          python -m pip install --upgrade pip
+          pip install openpyxl
+
+      - name: Run import script
+        run: |
+          python scripts/import_equipment.py
+
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v6
+        with:
+          title: "Import equipment from Excel"
+          commit-message: "chore(data): import equipment.json & rooms.json"
+          branch: chore/import-equipment
+          base: ${{ github.ref_name }}
+          labels: data, automated
