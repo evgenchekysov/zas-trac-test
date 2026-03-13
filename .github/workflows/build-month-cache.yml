@@ -1,1 +1,41 @@
+name: Build Month Cache
 
+on:
+  workflow_dispatch:
+    inputs:
+      year:
+        description: "Year (e.g. 2026)"
+        required: true
+        default: "2026"
+      month:
+        description: "Month (01-12)"
+        required: true
+        default: "03"
+
+jobs:
+  build-cache:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          pip install pandas openpyxl
+
+      - name: Build cache
+        run: |
+          mkdir -p cache
+          python build_month_cache.py ${{ github.event.inputs.year }} ${{ github.event.inputs.month }}
+
+      - name: Upload artifact (cache)
+        uses: actions/upload-artifact@v3
+        with:
+          name: month-cache
+          path: cache/
