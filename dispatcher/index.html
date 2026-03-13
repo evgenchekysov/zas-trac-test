@@ -1,1 +1,46 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ZAS‑TRAC Dispatcher</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
 
+  <header class="topbar">
+    <button id="prev" class="month-btn">←</button>
+    <span id="month-title" class="month-label"></span>
+    <button id="next" class="month-btn">→</button>
+  </header>
+
+  <main id="board">
+    <section class="column" data-status="new">
+      <h2>Новые</h2>
+      <div class="list" id="col-new"></div>
+    </section>
+
+    <section class="column" data-status="assigned">
+      <h2>Назначены</h2>
+      <div class="list" id="col-assigned"></div>
+    </section>
+
+    <section class="column" data-status="in_progress">
+      <h2>В работе</h2>
+      <div class="list" id="col-in_progress"></div>
+    </section>
+
+    <section class="column" data-status="on_hold">
+      <h2>Пауза</h2>
+      <div class="list" id="col-on_hold"></div>
+    </section>
+
+    <section class="column" data-status="done">
+      <h2>Готово</h2>
+      <div class="list" id="col-done"></div>
+    </section>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
