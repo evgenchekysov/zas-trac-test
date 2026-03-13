@@ -1,12 +1,12 @@
 {
   "month": "2026-03",
-  "generated_utc": "2026-03-13T15:39:29.290163+00:00",
+  "generated_utc": "2026-03-13T15:44:09.232201+00:00",
   "issues": [
     {
       "issue": null,
       "status": "new",
-      "room": null,
-      "equipment_id": null,
+      "room": "A-21",
+      "equipment_id": "EQ-4401",
       "assignee": null,
       "work_minutes": 0,
       "hold_minutes": 0
