@@ -1,4 +1,22 @@
 {
   "issue_id": 123,
-  "events": []
+  "title": "Не работает освещение",
+  "room": "A-21",
+  "equipment_id": "EQ-4401",
+  "events": [
+    {
+      "ts": "2026-03-12T09:21:33",
+      "type": "start",
+      "author": "evgenchekysov",
+      "equipment_id": "EQ-4401",
+      "title": "Не работает освещение"
+    },
+    {
+      "ts": "2026-03-12T09:51:10",
+      "type": "hold",
+      "reason": "ожидание материалов",
+      "equipment_id": "EQ-4401",
+      "title": "Не работает освещение"
+    }
+  ]
 }
