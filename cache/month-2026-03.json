@@ -1,5 +1,15 @@
 {
   "month": "2026-03",
-  "generated_utc": "2026-03-13T15:35:53.049164+00:00",
-  "issues": []
+  "generated_utc": "2026-03-13T15:39:29.290163+00:00",
+  "issues": [
+    {
+      "issue": null,
+      "status": "new",
+      "room": null,
+      "equipment_id": null,
+      "assignee": null,
+      "work_minutes": 0,
+      "hold_minutes": 0
+    }
+  ]
 }
