@@ -416,3 +416,80 @@ main {
   padding: 4px 8px;
   border-radius: 999px;
 }
+
+/* =========================================================
+   ШАГ 5 — Цветовая маркировка задач (статусы, просрочки)
+   ========================================================= */
+
+/* Полоса слева по статусу */
+.ticket {
+  position: relative;
+  border-left: 6px solid transparent;
+}
+
+/* Цвет левой полосы по статусу */
+.ticket.status-new      { border-left-color: var(--red); }
+.ticket.status-assigned { border-left-color: var(--yellow); }
+.ticket.status-inwork   { border-left-color: var(--green); }
+.ticket.status-paused   { border-left-color: var(--blue); }
+.ticket.status-closed   { border-left-color: var(--gray); }
+
+/* Нежная подложка по статусу (для незакрытых) — если браузер поддерживает color-mix */
+@supports (background: color-mix(in oklab, red, white)) {
+  .ticket.status-new:not(.status-closed)      { background: color-mix(in oklab, var(--card) 94%, var(--red)); }
+  .ticket.status-assigned:not(.status-closed) { background: color-mix(in oklab, var(--card) 94%, var(--yellow)); }
+  .ticket.status-inwork:not(.status-closed)   { background: color-mix(in oklab, var(--card) 94%, var(--green)); }
+  .ticket.status-paused:not(.status-closed)   { background: color-mix(in oklab, var(--card) 94%, var(--blue)); }
+}
+
+/* Бейдж статуса (дополнительно к бейджу приоритета) */
+.status-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1;
+  padding: 5px 9px;
+  border-radius: 999px;
+  border: 1px solid rgba(0,0,0,0.08);
+  color: #111;
+  background: var(--bg-soft);
+}
+
+.status-tag.status-new      { background: color-mix(in oklab, #fff 70%, var(--red)); }
+.status-tag.status-assigned { background: color-mix(in oklab, #fff 70%, var(--yellow)); }
+.status-tag.status-inwork   { background: color-mix(in oklab, #fff 70%, var(--green)); color: #fff; border-color: rgba(255,255,255,0.25); }
+.status-tag.status-paused   { background: color-mix(in oklab, #fff 70%, var(--blue));  color: #fff; border-color: rgba(255,255,255,0.25); }
+.status-tag.status-closed   { background: color-mix(in oklab, #fff 70%, var(--gray)); }
+
+/* Просрочки (по dueAt) — базовая красная рамка */
+.ticket.overdue {
+  outline: 2px solid var(--danger);
+  outline-offset: 0;
+  box-shadow: 0 0 0 4px color-mix(in oklab, var(--danger) 15%, transparent);
+}
+
+/* "Хвост" (>30 дней без дедлайна) — янтарная пунктирная рамка */
+.ticket.tail {
+  outline: 2px dashed #f59e0b;
+  outline-offset: 0;
+}
+
+/* Мигающая рамка для просрочки */
+@keyframes blink-red {
+  0%   { outline-color: rgba(231, 76, 60, 1); box-shadow: 0 0 0 4px color-mix(in oklab, var(--danger) 20%, transparent); }
+  50%  { outline-color: rgba(231, 76, 60, 0.12); box-shadow: 0 0 0 0 transparent; }
+  100% { outline-color: rgba(231, 76, 60, 1); box-shadow: 0 0 0 4px color-mix(in oklab, var(--danger) 20%, transparent); }
+}
+
+.ticket.overdue.blink {
+  animation: blink-red 1.2s infinite ease-in-out;
+}
+
+/* Адаптив: статус+приоритет в строку и переносятся при необходимости */
+.ticket-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
