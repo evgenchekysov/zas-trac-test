@@ -1,0 +1,75 @@
+name: Deploy Telegram Notifier
+
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - "tg_backend/**"
+      - ".github/workflows/deploy-notifier.yml"
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      # Копируем все файлы бэкенда на сервер
+      - name: Copy files to server
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          source: "tg_backend/*"
+          target: "~/zas-notifier"
+          overwrite: true
+
+      # Готовим сервер и деплоим контейнер
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v0.1.10
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          script: |
+            set -e
+
+            # 1) Подготовка: Docker и папка
+            sudo apt-get update -y
+            if ! command -v docker >/dev/null 2>&1; then
+              echo "Installing Docker..."
+              sudo apt-get install -y docker.io
+              sudo systemctl enable --now docker
+            fi
+
+            mkdir -p ~/zas-notifier
+            cd ~/zas-notifier
+            ls -la
+
+            # 2) Файрвол: открыть 9000 (если ufw активен)
+            if command -v ufw >/dev/null 2>&1; then
+              sudo ufw allow 9000/tcp || true
+            fi
+
+            # 3) Останавливаем и пересоздаём контейнер
+            sudo docker stop zas-notifier || true
+            sudo docker rm zas-notifier || true
+
+            # 4) Сборка с актуальной базой образов
+            sudo docker build --pull -t zas-notifier .
+
+            # 5) Запуск контейнера
+            sudo docker run -d \
+              --name zas-notifier \
+              -p 9000:9000 \
+              -e BOT_TOKEN="${{ secrets.BOT_TOKEN }}" \
+              -e CHAT_ID="${{ secrets.CHAT_ID }}" \
+              -e API_KEY="${{ secrets.API_KEY }}" \
+              --restart unless-stopped \
+              zas-notifier
+
+            # 6) Проба здоровья: локальный curl к эндпоинту (вернёт 405/404, но важен факт ответа)
+            sleep 3
+            curl -s -o /dev/null -w "%{http_code}\n" http://127.0.0.1:9000/tg/notify || true
