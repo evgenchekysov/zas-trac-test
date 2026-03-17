@@ -310,20 +310,86 @@ document.addEventListener('DOMContentLoaded', () => {
     updateMonthStats(groups);
   }
 
+   function isOverdue(t) {
+  // Просрочка определяется по dueAt, тикет не должен быть закрыт
+  if (t.status === 'closed') return false;
+  if (!t.dueAt) return false;
+  try {
+    return new Date(t.dueAt).getTime() < Date.now();
+  } catch {
+    return false;
+  }
+}
+   
   function isTail(t) {
     if (t.status === 'closed') return false;
     return daysBetween(t.createdAt, new Date().toISOString()) > 30;
   }
 
   function renderTicketTile(t) {
-    const div = document.createElement('div');
-    div.className = 'ticket';
-    div.dataset.id = t.id;
+  const div = document.createElement('div');
+  div.className = 'ticket';
+  div.dataset.id = t.id;
+  div.dataset.status = t.status;
+  div.dataset.priority = t.priority;
 
-    if (isTail(t)) {
-      div.style.outline = '2px solid #e11d48';
-      div.title = 'Хвост: заявке больше 30 дней';
-    }
+  // Цветовая маркировка по статусу (для полосы слева и подложки)
+  div.classList.add(`status-${t.status}`);
+
+  // Просрочка (красная мигающая рамка) или "хвост" (>30 дней)
+  if (isOverdue(t)) {
+    div.classList.add('overdue', 'blink'); // мигание включено дополнительно классом .blink
+  } else if (isTail(t)) {
+    div.classList.add('tail');
+  }
+
+  // Заголовок
+  const title = document.createElement('div');
+  title.className = 'ticket-title';
+  title.textContent = `#${t.id} — ${t.title}`;
+  div.appendChild(title);
+
+  // Правый блок: статус + приоритет
+  const actions = document.createElement('div');
+  actions.className = 'ticket-actions';
+
+  const st = document.createElement('span');
+  st.className = `status-tag status-${t.status}`;
+  st.textContent = (typeof STATUS_RU !== 'undefined' && STATUS_RU[t.status]) ? STATUS_RU[t.status] : t.status;
+  actions.appendChild(st);
+
+  const badge = document.createElement('span');
+  badge.className = `badge ${t.priority}`;
+  badge.innerHTML = `<span class="dot"></span> ${PRIORITY_RU[t.priority] || t.priority}`;
+  actions.appendChild(badge);
+
+  div.appendChild(actions);
+
+  // Метаданные
+  const meta = document.createElement('div');
+  meta.className = 'ticket-meta';
+  const parts = [
+    `Создана: ${formatDateTime(t.createdAt)}`,
+    `Месяц: ${monthHuman(t.month)}`
+  ];
+  if (t.dueAt && t.status !== 'closed') {
+    parts.push(`Дедлайн: ${formatDateTime(t.dueAt)}`);
+  }
+  meta.textContent = parts.join(' • ');
+  div.appendChild(meta);
+
+  // Краткое описание
+  if (t.description) {
+    const d = document.createElement('div');
+    d.className = 'ticket-meta';
+    d.textContent = truncate(t.description, 180);
+    div.appendChild(d);
+  }
+
+  // Клик — открыть модалку
+  div.addEventListener('click', () => openModal(t));
+  return div;
+}
 
     const title = document.createElement('div');
     title.className = 'ticket-title';
@@ -511,6 +577,36 @@ document.addEventListener('DOMContentLoaded', () => {
     setupAccordions();
     setupMonthToolbar();
     await loadTickets();
+     
+     // === ДЕМО: добавляем просроченную "новую" на 30 минут ===
+(function addOverdueDemoTicket() {
+  const now = Date.now();
+  const createdAtISO = new Date(now - 45 * 60 * 1000).toISOString(); // создана 45 минут назад
+  const dueAtISO = new Date(now - 30 * 60 * 1000).toISOString();     // дедлайн 30 минут назад (просрочка)
+
+  const demo = {
+    id: 199,
+    title: '🔥 Проверка: просроченная новая заявка',
+    description: 'Демо для проверки мигающей рамки при просрочке dueAt.',
+    status: 'new',
+    priority: 'high',
+    createdAt: createdAtISO,
+    dueAt: dueAtISO,
+    location: 'Демо‑зона',
+    requester: 'System'
+  };
+
+  // month по созданию (для незакрытых)
+  demo.month = (function toMonthKeyFromISO(iso) {
+    const d = new Date(iso);
+    const y = d.getFullYear();
+    const m = String(d.getMonth()+1).padStart(2,'0');
+    return `${y}-${m}`;
+  })(demo.createdAt);
+
+  tickets.push(demo);
+})();
+     
     ensureMonthFieldsAndMigrate();
     renderAll();
   })();
