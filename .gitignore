@@ -1,0 +1,22 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.egg-info/
+.venv/
+.env
+.env.* 
+# Node/Frontend (на будущее)
+node_modules/
+dist/
+.build/
+# OS/IDE
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+# Credentials (не коммитим ключи)
+secrets.json
+*.secret
+*.key
