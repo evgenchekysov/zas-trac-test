@@ -1,46 +1,117 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ZAS‑TRAC Dispatcher</title>
-  <link rel="stylesheet" href="styles.css">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ZAS‑TRAC — Диспетчер</title>
+    <link rel="stylesheet" href="styles.css" />
 </head>
+
 <body>
+    <header>
+        <h1>ZAS‑TRAC — Диспетчер</h1>
+    </header>
 
-  <header class="topbar">
-    <button id="prev" class="month-btn">←</button>
-    <span id="month-title" class="month-label"></span>
-    <button id="next" class="month-btn">→</button>
-  </header>
+    <main>
 
-  <main id="board">
-    <section class="column" data-status="new">
-      <h2>Новые</h2>
-      <div class="list" id="col-new"></div>
-    </section>
+        <!-- ========================================================= -->
+        <!--    АККОРДЕОН: НОВЫЕ ЗАЯВКИ (красный)                     -->
+        <!-- ========================================================= -->
+        <section class="accordion" data-status="new">
+            <button class="accordion-header red">
+                Новые заявки <span class="counter" id="count-new">0</span>
+            </button>
+            <div class="accordion-body" id="list-new">
+                <!-- Заявки загружаются через app.js -->
+            </div>
+        </section>
 
-    <section class="column" data-status="assigned">
-      <h2>Назначены</h2>
-      <div class="list" id="col-assigned"></div>
-    </section>
+        <!-- ========================================================= -->
+        <!--    АККОРДЕОН: НАЗНАЧЕННЫЕ (желтый)                       -->
+        <!-- ========================================================= -->
+        <section class="accordion" data-status="assigned">
+            <button class="accordion-header yellow">
+                Назначенные <span class="counter" id="count-assigned">0</span>
+            </button>
+            <div class="accordion-body" id="list-assigned">
+                <!-- Заявки подгружаются динамически -->
+            </div>
+        </section>
 
-    <section class="column" data-status="in_progress">
-      <h2>В работе</h2>
-      <div class="list" id="col-in_progress"></div>
-    </section>
+        <!-- ========================================================= -->
+        <!--    АККОРДЕОН: В РАБОТЕ (зеленый)                         -->
+        <!-- ========================================================= -->
+        <section class="accordion" data-status="inwork">
+            <button class="accordion-header green">
+                В работе <span class="counter" id="count-inwork">0</span>
+            </button>
+            <div class="accordion-body" id="list-inwork">
+                <!-- Заявки -->
+            </div>
+        </section>
 
-    <section class="column" data-status="on_hold">
-      <h2>Пауза</h2>
-      <div class="list" id="col-on_hold"></div>
-    </section>
+        <!-- ========================================================= -->
+        <!--    АККОРДЕОН: НА ПАУЗЕ (голубой)                         -->
+        <!-- ========================================================= -->
+        <section class="accordion" data-status="paused">
+            <button class="accordion-header blue">
+                На паузе <span class="counter" id="count-paused">0</span>
+            </button>
+            <div class="accordion-body" id="list-paused">
+                <!-- Заявки -->
+            </div>
+        </section>
 
-    <section class="column" data-status="done">
-      <h2>Готово</h2>
-      <div class="list" id="col-done"></div>
-    </section>
-  </main>
+        <!-- ========================================================= -->
+        <!--    АККОРДЕОН: ЗАКРЫТЫЕ / АРХИВ (серый)                   -->
+        <!-- ========================================================= -->
+        <section class="accordion" data-status="closed">
+            <button class="accordion-header gray">
+                Закрытые (архив) <span class="counter" id="count-closed">0</span>
+            </button>
+            <div class="accordion-body" id="list-closed">
+                <!-- Заявки; сортировка по времени закрытия -->
+            </div>
+        </section>
 
-  <script src="app.js"></script>
+    </main>
+
+
+    <!-- ========================================================= -->
+    <!--    МОДАЛЬНОЕ ОКНО КАРТОЧКИ ЗАЯВКИ                         -->
+    <!-- ========================================================= -->
+    <div id="modal" class="modal hidden">
+        <div class="modal-content">
+
+            <!-- Заголовок карточки -->
+            <h2 id="modal-title">Заявка #</h2>
+
+            <!-- Подробности заявки -->
+            <div class="modal-details">
+                <p><strong>Создана:</strong> <span id="m-created"></span></p>
+                <p><strong>Статус:</strong> <span id="m-status"></span></p>
+                <p><strong>Приоритет:</strong> <span id="m-priority"></span></p>
+                <p><strong>Описание:</strong></p>
+                <p id="m-description"></p>
+
+                <p><strong>Исполнители:</strong></p>
+                <p id="m-workers"></p>
+            </div>
+
+            <!-- Кнопки управления (будут показываться по ролям) -->
+            <div class="modal-actions">
+                <button id="btn-assign" class="action warning">Назначить</button>
+                <button id="btn-start" class="action success">В работу</button>
+                <button id="btn-pause" class="action info">Пауза</button>
+                <button id="btn-resume" class="action primary">Возобновить</button>
+                <button id="btn-close" class="action danger">Закрыть</button>
+            </div>
+
+            <!-- Закрыть окно -->
+            <button class="modal-close" id="modal-close">×</button>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
 </body>
 </html>
