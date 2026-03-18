@@ -7,8 +7,8 @@ on:
       - "tg_backend/**"
       - ".github/workflows/deploy-notifier.yml"
 
-jobs:
-  deploy:
+#jobs:
+    deploy:
     runs-on: ubuntu-latest
 
     steps:
