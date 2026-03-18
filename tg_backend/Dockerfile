@@ -8,18 +8,21 @@ ENV PIP_DISABLE_PIP_VERSION_CHECK=1 \
 # Система и рабочая папка
 WORKDIR /app
 
-# Зависимости (если есть requirements.txt)
+# Установим системные зависимости (по минимуму; расширим при необходимости)
+RUN apt-get update -y && apt-get install -y --no-install-recommends \
+    ca-certificates curl && \
+    rm -rf /var/lib/apt/lists/*
+
+# Зависимости Python
 COPY requirements.txt /app/requirements.txt
-RUN if [ -f /app/requirements.txt ]; then \
-      pip install --no-cache-dir -r /app/requirements.txt ; \
-    fi
+RUN pip install --no-cache-dir -r /app/requirements.txt
 
 # Копируем исходники
 COPY . /app
 
-# Railway передает порт в переменной PORT
+# Railway прокинет сюда порт, а мы слушаем 0.0.0.0
 ENV PORT=9000
 
-# Запуск FastAPI
-# Предполагается, что в tg_notify.py определен объект app (FastAPI)
+# Предполагаем, что в tg_notify.py определён FastAPI-приложение как `app`
+# Если модуль/имя приложения иные — поправим строку ниже.
 CMD ["sh", "-c", "uvicorn tg_notify:app --host 0.0.0.0 --port ${PORT}"]
