@@ -1,0 +1,5 @@
+[build]
+  root = "tg_backend"
+
+[deploy]
+  startCommand = "python3 tg_notify.py"
