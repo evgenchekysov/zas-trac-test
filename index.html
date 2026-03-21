@@ -20,6 +20,42 @@
     small.muted { color:#666; }
   </style>
 </head>
+  <script>
+  const TG_NOTIFY_URL = 'https://zas-trac-test-production.up.railway.app/tg/notify';
+
+  // Универсальная отправка в Telegram
+  async function notify(event, ticket, extra = {}) {
+    const payload = { event, sentAt: new Date().toISOString(), ticket, extra };
+    console.log('[TG] notify payload:', payload);
+
+    const resp = await fetch(TG_NOTIFY_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' }, // без x-api-key
+      body: JSON.stringify(payload)
+    });
+
+    let data = {};
+    try { data = await resp.json(); } catch (_) {}
+    console.log('[TG] notify resp:', data);
+    return data;
+  }
+
+  // Утилита нормализации тикета — гарантирует обязательные поля
+  function buildTicket(base) {
+    return {
+      id:        base.id,
+      title:     base.title,
+      status:    base.status ?? 'new',
+      priority:  base.priority ?? 'normal',
+      requester: base.requester ?? 'UI',
+      assignees: Array.isArray(base.assignees) ? base.assignees : [],
+      createdAt: base.createdAt ?? new Date().toISOString(),
+      dueAt:     base.dueAt ?? new Date(Date.now() + 60*60*1000).toISOString(),
+      month:     base.month ?? new Date().toISOString().slice(0,7),
+      location:  base.location ?? 'N/A'
+    };
+  }
+</script>
 <body>
 
   <h1>ZAS‑TRAC TEST PAGE</h1>
