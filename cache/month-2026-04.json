@@ -1,0 +1,60 @@
+{
+  "month": "2026-04",
+  "generated_utc": "2026-04-01T07:03:59.378853+00:00",
+  "issues": [
+    {
+      "issue": 1,
+      "status": "done",
+      "room": null,
+      "equipment_id": null,
+      "assignee": null,
+      "work_minutes": 0,
+      "hold_minutes": 0
+    },
+    {
+      "issue": 10,
+      "status": "new",
+      "room": null,
+      "equipment_id": null,
+      "assignee": null,
+      "work_minutes": 0,
+      "hold_minutes": 0
+    },
+    {
+      "issue": null,
+      "status": "new",
+      "room": "A-21",
+      "equipment_id": "EQ-4401",
+      "assignee": null,
+      "work_minutes": 0,
+      "hold_minutes": 0
+    },
+    {
+      "issue": 4,
+      "status": "done",
+      "room": null,
+      "equipment_id": null,
+      "assignee": null,
+      "work_minutes": 0,
+      "hold_minutes": 0
+    },
+    {
+      "issue": 8,
+      "status": "done",
+      "room": null,
+      "equipment_id": null,
+      "assignee": null,
+      "work_minutes": 0,
+      "hold_minutes": 0
+    },
+    {
+      "issue": 9,
+      "status": "done",
+      "room": null,
+      "equipment_id": null,
+      "assignee": null,
+      "work_minutes": 0,
+      "hold_minutes": 0
+    }
+  ]
+}
